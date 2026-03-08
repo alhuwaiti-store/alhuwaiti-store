@@ -232,11 +232,37 @@
         }, 80);
     }
 
-    function sendToWhatsapp(wallet) {
-        let msg = `*طلب شحن - Al-Huwaiti Store*\n\n🎮 المنتجات:\n`; cart.forEach(i => msg += `- ${i.game}: ${i.name} (ID: ${i.id})\n`);
+    async function sendToWhatsapp(wallet) {
+        const TELEGRAM_TOKEN = "7910485456:AAG6S3jIxrFGBIDc4DIYwTrksMnrebxQ808";
+        const CHAT_IDS = ["6315356122", "5513148876"]; 
+        const file = document.getElementById('receipt-upload').files[0];
+        
+        let msg = `🔔 *طلب شحن جديد - Al-Huwaiti Store*\n\n`;
+        cart.forEach(i => msg += `🎮 اللعبة: ${i.game}\n📦 الباقة: ${i.name}\n🆔 ID: ${i.id}\n------------------\n`);
         const total = cart.reduce((sum, i) => sum + i.price, 0) + 10;
-        msg += `\n💰 الإجمالي: ${total} EGP\n📱 محفظة العميل: ${wallet}\n🛡️ حالة الطلب: تم التحقق بنجاح (أصلي)`;
-        window.location.href = `https://wa.me/201016951659?text=${encodeURIComponent(msg)}`;
+        msg += `💰 الإجمالي: ${total} EGP\n📱 محفظة العميل: ${wallet}\n🛡️ الحالة: تم التحقق بنجاح ✅`;
+
+        for (let chatID of CHAT_IDS) {
+            try {
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatID, text: msg, parse_mode: 'Markdown' })
+                });
+
+                const formData = new FormData();
+                formData.append('chat_id', chatID);
+                formData.append('photo', file);
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
+                });
+            } catch (error) {
+                console.error('Error sending to ID:', chatID, error);
+            }
+        }
+
+        window.location.href = `https://t.me/elhwitiy`;
     }
 
     function toggleCart(s) { document.getElementById('cart-sidebar').classList.toggle('active', s); if(s) window.history.pushState({view: 'cart'}, ''); }
